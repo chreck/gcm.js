@@ -16,36 +16,57 @@
 
 package net.iamyellow.gcmjs;
 
-import java.util.HashMap;
-import java.util.List;
-
+import org.appcelerator.kroll.KrollDict;
 import org.appcelerator.titanium.TiApplication;
 import org.appcelerator.titanium.util.TiRHelper;
 import org.appcelerator.titanium.util.TiRHelper.ResourceNotFoundException;
 
-import com.google.android.gms.gcm.GoogleCloudMessaging;
-import android.support.v4.app.NotificationCompat;
-
-import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.app.ActivityManager;
-import android.app.ActivityManager.RunningAppProcessInfo;
+import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-import org.appcelerator.kroll.KrollDict;
+import android.support.v4.app.NotificationCompat;
+
+import com.google.android.gms.gcm.GoogleCloudMessaging;
 
 public class GCMIntentService extends IntentService {
 	private static final String TAG = "GCMIntentService";
 
 	public static final int NOTIFICATION_ID = 1;
-	private NotificationManager mNotificationManager;
 	NotificationCompat.Builder builder;
 
 	public GCMIntentService() {
 		super(GCMIntentService.class.getSimpleName());
+	}
+	
+	/**
+	 * Converts a extra in the bundle by key. Support for String and Integers.
+	 * @param key the key which must be in the Bundle extras
+	 * @param extras the Bundle
+	 * @return the key as String or null if not successful
+	 */
+	private String convert(String key, Bundle extras) {
+		String eventKey = key.startsWith("data.") ? key.substring(5) : key;
+		// extra can be of any type
+		Object objData = extras.get(key);
+		String stringData = null;
+		// support for integers and strings
+		if(objData instanceof Integer) {
+			stringData = ((Integer)objData).toString();
+		} else if (objData instanceof String) {
+			stringData = (String) objData;
+		} else if(objData != null){
+			@SuppressWarnings("rawtypes")
+			Class cls = objData.getClass();
+			GcmjsModule.logw(TAG + ": No support for type of key "+ key +" eventKey:" + eventKey + " class type " +cls.getName()  );
+		} else {
+			GcmjsModule.logw(TAG + ": No data for key "+ key +" eventKey:" + eventKey + " objData " + objData );
+		}
+		if (stringData != null) {
+			GcmjsModule.logd(TAG + ": key "+ key +" eventKey:" + eventKey + " stringData:" + stringData );
+		}
+		return stringData;
 	}
 
 	@Override
@@ -67,15 +88,12 @@ public class GCMIntentService extends IntentService {
 					GcmjsModule.logd(TAG + ": ResourceNotFoundException: " + e.getMessage());
 				}
 
-				// フォアグラウンドの場合だけPush通知
 				if (!isInForeground()) {
 					TiApplication tiapp = TiApplication.getInstance();
 					Intent launcherIntent = new Intent(tiapp, GcmjsService.class);
 					for (String key : extras.keySet()) {
 						String eventKey = key.startsWith("data.") ? key.substring(5) : key;
-						String data = extras.getString(key);
-						// GcmjsModule.logd(TAG + ": eventKey:" + eventKey + "
-						// data:" + data);
+						String data = convert(key,extras);
 						if (data != null && !"".equals(data)) {
 							launcherIntent.putExtra(eventKey, extras.getString(key));
 						}
@@ -86,11 +104,9 @@ public class GCMIntentService extends IntentService {
 					KrollDict messageData = new KrollDict();
 					for (String key : extras.keySet()) {
 						String eventKey = key.startsWith("data.") ? key.substring(5) : key;
-						String data = extras.getString(key);
-						// GcmjsModule.logd(TAG + ": eventKey:" + eventKey + "
-						// data:" + data);
+						String data = convert(key,extras);
 						if (data != null && !"".equals(data)) {
-							messageData.put(eventKey, extras.getString(key));
+							messageData.put(eventKey, data);
 						}
 					}
 					fireMessage(messageData);

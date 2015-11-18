@@ -1,5 +1,6 @@
 //
 //   Copyright 2013 jordi domenech <http://iamyellow.net, jordi@iamyellow.net>
+//	 Copyright 2015	Christoph Eck <http://shuubz.com, christoph.eck@movento.com>
 //
 //   Licensed under the Apache License, Version 2.0 (the "License");
 //   you may not use this file except in compliance with the License.
@@ -16,15 +17,19 @@
 
 package net.iamyellow.gcmjs;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.io.IOException;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 import org.appcelerator.kroll.KrollDict;
-import org.appcelerator.kroll.common.Log;
-import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.KrollFunction;
+import org.appcelerator.kroll.KrollModule;
 import org.appcelerator.kroll.KrollRuntime;
 import org.appcelerator.kroll.annotations.Kroll;
+import org.appcelerator.kroll.common.Log;
 import org.appcelerator.titanium.TiApplication;
 
 import android.content.Context;
@@ -45,11 +50,12 @@ public class GcmjsModule extends KrollModule {
 	private static final String PROPERTY_ON_MESSAGE = "callback";
 	private static final String PROPERTY_ON_UNREGISTER = "unregister";
 	private static final String PROPERTY_ON_DATA = "data";
+	private static final String PROPERTY_SENDER_IDS = "senderid";
 
 	private static final String EVENT_PROPERTY_DEVICE_TOKEN = "deviceToken";
 	private static final String EVENT_PROPERTY_ERROR = "error";
 
-	public static String PROPERTY_SENDER_ID = "GCM_sender_id";
+	public static String PROPERTY_TI_APP_SENDER_ID = "GCM_sender_id";
 	public static final boolean DBG = org.appcelerator.kroll.common.TiConfig.LOGD;
 
 	// *************************************************************
@@ -66,6 +72,10 @@ public class GcmjsModule extends KrollModule {
 	public static void logw(String msg) {
 		Log.e(LCAT, msg);
 	}
+	
+	// *************************************************************
+	// members
+	private List<String> senderId;
 
 	// *************************************************************
 	// callbacks
@@ -98,6 +108,7 @@ public class GcmjsModule extends KrollModule {
 		onMessageCallback = null;
 		onUnregisterCallback = null;
 		onDataCallback = null;
+		senderId = new ArrayList<String>();
 
 		instance = this;
 		if (appStateListener == null) {
@@ -131,36 +142,42 @@ public class GcmjsModule extends KrollModule {
 	// registration
 
 	@Kroll.method
-	public void registerForPushNotifications(Object arg) {
+	public void registerForPushNotifications(KrollDict arg) {
 
 		// collect parameters
-		@SuppressWarnings("unchecked")
-		HashMap<String, Object> kd = (HashMap<String, Object>) arg;
-		Object pOnSuccessCallback = kd.get(PROPERTY_ON_SUCCESS);
-		Object pOnErrorCallback = kd.get(PROPERTY_ON_ERROR);
-		Object pOnMessageCallback = kd.get(PROPERTY_ON_MESSAGE);
-		Object pOnUnregisterCallback = kd.get(PROPERTY_ON_UNREGISTER);
-		Object pOnDataCallback = kd.get(PROPERTY_ON_DATA);
-
-		if (pOnSuccessCallback instanceof KrollFunction) {
+		if(arg.containsKeyAndNotNull(PROPERTY_ON_SUCCESS) && arg.get(PROPERTY_ON_SUCCESS) instanceof KrollFunction) {
 			logd("Setting onSuccessCallback.");
-			onSuccessCallback = (KrollFunction) pOnSuccessCallback;
+			onSuccessCallback = (KrollFunction) arg.get(PROPERTY_ON_SUCCESS);
 		}
-		if (pOnErrorCallback instanceof KrollFunction) {
+		
+		if(arg.containsKeyAndNotNull(PROPERTY_ON_ERROR) && arg.get(PROPERTY_ON_ERROR) instanceof KrollFunction) {
 			logd("Setting onErrorCallback.");
-			onErrorCallback = (KrollFunction) pOnErrorCallback;
+			onErrorCallback = (KrollFunction) arg.get(PROPERTY_ON_ERROR);
 		}
-		if (pOnMessageCallback instanceof KrollFunction) {
+		
+		if(arg.containsKeyAndNotNull(PROPERTY_ON_MESSAGE) && arg.get(PROPERTY_ON_MESSAGE) instanceof KrollFunction) {
 			logd("Setting onMessageCallback.");
-			onMessageCallback = (KrollFunction) pOnMessageCallback;
+			onMessageCallback = (KrollFunction) arg.get(PROPERTY_ON_MESSAGE);
 		}
-		if (pOnUnregisterCallback instanceof KrollFunction) {
+		
+		if(arg.containsKeyAndNotNull(PROPERTY_ON_UNREGISTER) && arg.get(PROPERTY_ON_UNREGISTER) instanceof KrollFunction) {
 			logd("Setting onUnregisterCallback.");
-			onUnregisterCallback = (KrollFunction) pOnUnregisterCallback;
+			onUnregisterCallback = (KrollFunction) arg.get(PROPERTY_ON_UNREGISTER);
 		}
-		if (pOnDataCallback instanceof KrollFunction) {
+		
+		if(arg.containsKeyAndNotNull(PROPERTY_ON_DATA) && arg.get(PROPERTY_ON_DATA) instanceof KrollFunction) {
 			logd("Setting onDataCallback.");
-			onDataCallback = (KrollFunction) pOnDataCallback;
+			onDataCallback = (KrollFunction) arg.get(PROPERTY_ON_DATA);
+		}
+		
+		if(arg.containsKeyAndNotNull(PROPERTY_SENDER_IDS) ) {			
+			if (arg.get(PROPERTY_SENDER_IDS) instanceof Object[]) {
+				senderId.addAll(Arrays.asList(arg.getStringArray(PROPERTY_SENDER_IDS)));
+				logd("Setting senderIds.");
+			} else if(arg.get(PROPERTY_SENDER_IDS) instanceof Object) {
+				senderId.add(arg.getString(PROPERTY_SENDER_IDS));
+				logd("Setting senderId.");
+			}
 		}
 
 		// if we're executing this, we **SHOULD BE** in fg
@@ -175,11 +192,23 @@ public class GcmjsModule extends KrollModule {
 						Context context = TiApplication.getInstance().getApplicationContext();
 						gcm = GoogleCloudMessaging.getInstance(context);
 					}
-					String registrationId = gcm.register(TiApplication.getInstance().getAppProperties()
-							.getString(GcmjsModule.PROPERTY_SENDER_ID, ""));
+					String tiAppSenderId =  TiApplication.getInstance().getAppProperties().getString(GcmjsModule.PROPERTY_TI_APP_SENDER_ID, "");
+					// a Set prevents adding duplicate sender id
+					Set<String> ids = new LinkedHashSet<String>();
+					if(tiAppSenderId.isEmpty() == false) {
+						ids.add(tiAppSenderId);
+					}
+					if(senderId.size() > 0) {
+						ids.addAll(senderId);
+					}
+					if(ids.size() == 0) {
+						throw new Exception("Could not found any sender id in tiapp.xml or in object");
+					}
+					String [] idArray = new String[ids.size()];
+					String registrationId = gcm.register(ids.toArray(idArray));
 					msg = "Device registered: registrationId = " + registrationId;
 					fireSuccess(registrationId);
-				} catch (IOException e) {
+				} catch (Exception e) {
 					msg = "Error: " + e.getMessage();
 					fireError(msg);
 				}

@@ -16,12 +16,9 @@
 
 package net.iamyellow.gcmjs;
 
-import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
-
-import net.iamyellow.gcmjs.GCMIntentService;
 
 public class GCMBroadcastReceiver extends android.support.v4.content.WakefulBroadcastReceiver {
 
