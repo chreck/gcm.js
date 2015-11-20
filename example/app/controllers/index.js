@@ -43,7 +43,7 @@ var dataWhenResume = function(ev) {
 var afterUnregister = function(ev) {
 	Ti.API.info(String.format('afterUnregister %s' , ev));
 	Ti.API.info('******* unregister ' + ev.deviceToken);
-	deviceToken = ''
+	deviceToken = '';
 };
 
 var isCallbackMethod = false;
@@ -56,7 +56,8 @@ if (isCallbackMethod) {
 		success: deviceTokenSuccess,
 		error: deviceTokenError,
 		unregister: afterUnregister,
-		data: dataWhenResume
+		data: dataWhenResume,
+		senderid: 123123123 // an array is also possible like [123,124,125]
 	});
 } else {
 
@@ -66,7 +67,7 @@ if (isCallbackMethod) {
 	gcm.addEventListener('error', deviceTokenError);
 	gcm.addEventListener('data', dataWhenResume);
 	gcm.addEventListener('unregister', afterUnregister);
-	gcm.registerForPushNotifications({});
+	gcm.registerForPushNotifications({senderid: 123123123});
 }
 
 
