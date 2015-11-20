@@ -22,7 +22,7 @@ import ti.modules.titanium.android.TiJSActivity;
 public class GcmjsActivity extends TiJSActivity {
 
 	public GcmjsActivity() {
-		super("gcm_activity.js");
+		super("gcmActivity.js");
 
 		if (TiApplication.getAppCurrentActivity() == null) {
 			GcmjsModule.logd("Starting gcm_activity.js, app is NOT running.");

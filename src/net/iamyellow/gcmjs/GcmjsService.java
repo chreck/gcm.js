@@ -20,6 +20,6 @@ import ti.modules.titanium.android.TiJSService;
 
 public final class GcmjsService extends TiJSService {
 	public GcmjsService() {
-		super("gcm.js");
+		super("gcmService.js");
 	}
 }
