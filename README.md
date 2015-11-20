@@ -1,6 +1,6 @@
 # gcm.js
 
-tdtsh/gcm.js is forked from [https://github.com/iamyellow/gcm.js](https://github.com/iamyellow/gcm.js)
+chreck/gcm.js if forked from tdtsh/gcm.js and original from [https://github.com/iamyellow/gcm.js](https://github.com/iamyellow/gcm.js)
 Thank you iamyellow!
 
 **gcm.js** is an open source module for Titanium Android SDK that lets developers receive GCM push notifications in their Android apps.
