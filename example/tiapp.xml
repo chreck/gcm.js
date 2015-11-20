@@ -1,20 +1,20 @@
 <?xml version = "1.0" encoding = "UTF-8" ?>
 <ti:app xmlns:ti="http://ti.appcelerator.org">
-  <id>com.tdtsh.app.gcmtest</id>
+  <id>com.your.app</id>
   <name>GcmTest</name>
   <version>1.0</version>
   <publisher>not specified</publisher>
-  <url>http://www.close-to.biz/</url>
+  <url></url>
   <description>not specified</description>
   <copyright>not specified</copyright>
   <icon>appicon.png</icon>
   <fullscreen>false</fullscreen>
   <navbar-hidden>false</navbar-hidden>
-  <analytics>true</analytics>
-  <guid>a32b219d-41d2-4778-9444-1da8c0d3ad78</guid>
+  <analytics>false</analytics>
   <property name="ti.ui.defaultunit" type="string">dp</property>
+  <!-- set sender id here or/and by the method gcm.registerForPushNotifications() -->
   <property name="GCM_sender_id" type="string">591360219986</property>
-  <property name="ti.android.debug" type="bool">true</property>
+  <!--<property name="ti.android.debug" type="bool">true</property>-->
   <ios>
     <plist>
       <dict>
@@ -87,5 +87,4 @@
   <plugins>
     <plugin version="1.0">ti.alloy</plugin>
   </plugins>
-  <property name="appc-app-id" type="string">1522034d4f40fc6253030ad7</property>
 </ti:app>

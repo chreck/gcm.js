@@ -17,4 +17,4 @@ guid:
 platform: android
 minsdk: 3.5.1.GA
 architectures: armeabi armeabi-v7a x86
-debuggable: true
+#debuggable: true
