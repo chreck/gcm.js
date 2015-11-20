@@ -2,8 +2,8 @@
 # this is your module manifest and used by Titanium
 # during compilation, packaging, distribution, etc.
 #
-version: 0.4
-apiversion: 2
+version: 0.5
+apiversion: 3
 description: Simple yet powerful API for Android GCM push notifications
 author: jordi domenech
 license: Apache License, Version 2.0
@@ -17,3 +17,4 @@ guid:
 platform: android
 minsdk: 3.5.1.GA
 architectures: armeabi armeabi-v7a x86
+debuggable: true
