@@ -2,7 +2,7 @@
 
 (function(activity, gcm) {
 
-	Ti.API.info('gcm_activity.js');
+	Ti.API.info('gcmActivity.js');
 	var intent = activity.intent;
 	var ntfId = 0;
 	var title = '';

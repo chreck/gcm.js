@@ -25,10 +25,10 @@ public class GcmjsActivity extends TiJSActivity {
 		super("gcmActivity.js");
 
 		if (TiApplication.getAppCurrentActivity() == null) {
-			GcmjsModule.logd("Starting gcm_activity.js, app is NOT running.");
+			GcmjsModule.logd("Starting gcmActivity.js, app is NOT running.");
 			AppStateListener.appWasNotRunning = true;
 		} else {
-			GcmjsModule.logd("Starting gcm_activity.js, app IS running.");
+			GcmjsModule.logd("Starting gcmActivity.js, app IS running.");
 			AppStateListener.appWasNotRunning = false;
 		}
 	}
