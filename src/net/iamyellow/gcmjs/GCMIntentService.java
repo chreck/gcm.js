@@ -47,7 +47,7 @@ public class GCMIntentService extends IntentService {
 	 * @return the key as String or null if not successful
 	 */
 	private String convert(String key, Bundle extras) {
-		String eventKey = key.startsWith("data.") ? key.substring(5) : key;
+		String eventKey = getEventKey(key);
 		// extra can be of any type
 		Object objData = extras.get(key);
 		String stringData = null;
@@ -59,14 +59,30 @@ public class GCMIntentService extends IntentService {
 		} else if(objData != null){
 			@SuppressWarnings("rawtypes")
 			Class cls = objData.getClass();
-			GcmjsModule.logw(TAG + ": No support for type of key "+ key +" eventKey:" + eventKey + " class type " +cls.getName()  );
+			GcmjsModule.logw(TAG + ": No support for type of key: "+ key +" eventKey: " + eventKey + " class type " +cls.getName()  );
 		} else {
-			GcmjsModule.logw(TAG + ": No data for key "+ key +" eventKey:" + eventKey + " objData " + objData );
+			GcmjsModule.logw(TAG + ": No data for key: "+ key +" eventKey: " + eventKey + " objData " + objData );
 		}
 		if (stringData != null) {
-			GcmjsModule.logd(TAG + ": key "+ key +" eventKey:" + eventKey + " stringData:" + stringData );
+			GcmjsModule.logd(TAG + ": key: "+ key +" eventKey: " + eventKey + " stringData:" + stringData );
 		}
 		return stringData;
+	}
+	
+	private String getEventKey(String key) {
+		return key.startsWith("data.") ? key.substring(5) : key;
+	}
+	
+	private KrollDict getMessageData(Bundle extras) {
+		KrollDict messageData = new KrollDict();
+		for (String key : extras.keySet()) {
+			String eventKey = getEventKey(key);
+			String data = convert(key,extras);
+			if (data != null && !"".equals(data)) {
+				messageData.put(eventKey, data);
+			}
+		}
+		return messageData;
 	}
 
 	@Override
@@ -92,26 +108,17 @@ public class GCMIntentService extends IntentService {
 					TiApplication tiapp = TiApplication.getInstance();
 					Intent launcherIntent = new Intent(tiapp, GcmjsService.class);
 					for (String key : extras.keySet()) {
-						String eventKey = key.startsWith("data.") ? key.substring(5) : key;
+						String eventKey = getEventKey(key);
 						String data = convert(key,extras);
 						if (data != null && !"".equals(data)) {
-							launcherIntent.putExtra(eventKey, extras.getString(key));
+							launcherIntent.putExtra(eventKey, data);
 						}
 					}
 					tiapp.startService(launcherIntent);
-
 				} else {
-					KrollDict messageData = new KrollDict();
-					for (String key : extras.keySet()) {
-						String eventKey = key.startsWith("data.") ? key.substring(5) : key;
-						String data = convert(key,extras);
-						if (data != null && !"".equals(data)) {
-							messageData.put(eventKey, data);
-						}
-					}
+					KrollDict messageData = getMessageData(extras);
 					fireMessage(messageData);
 				}
-
 			}
 		}
 		GCMBroadcastReceiver.completeWakefulIntent(intent);
